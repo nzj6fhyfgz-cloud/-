@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="manifest.webmanifest">
+<title>ST 国試トレーナー</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--text:#172033;--muted:#6b7280;--line:#e5e7eb;--accent:#2563eb;--good:#15803d;--bad:#b91c1c}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:820px;margin:auto;padding:16px}.top{display:flex;justify-content:space-between;align-items:center;gap:10px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-top:14px}
+h1{font-size:22px;margin:0}h2{font-size:18px;margin:0 0 10px}.muted{color:var(--muted);font-size:14px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.stat{text-align:center;border:1px solid var(--line);border-radius:14px;padding:12px}.stat b{display:block;font-size:20px}
+button,select{font:inherit}button{min-height:46px;border:1px solid var(--line);border-radius:13px;background:#fff;padding:10px 14px;cursor:pointer}
+button.primary{background:var(--accent);color:white;border-color:var(--accent);font-weight:700}.actions{display:flex;gap:8px;flex-wrap:wrap}
+.choice{width:100%;text-align:left;margin-top:8px}.choice.correct{outline:2px solid var(--good)}.choice.wrong{opacity:.65}
+.result{margin-top:14px;padding:13px;border:1px solid var(--line);border-radius:13px}.good{color:var(--good);font-weight:700}.bad{color:var(--bad);font-weight:700}
+select{width:100%;min-height:46px;border:1px solid var(--line);border-radius:13px;background:white;padding:0 12px}
+.tabs{display:flex;gap:8px;overflow:auto;padding-bottom:4px}.tabs button.active{background:#eaf1ff;border-color:#b7cdfc;font-weight:700}
+.hidden{display:none}.bar{height:8px;border-radius:999px;background:#e5e7eb;overflow:hidden}.bar i{display:block;height:100%;background:var(--accent)}
+@media(max-width:520px){.wrap{padding:12px}.stats{grid-template-columns:1fr 1fr 1fr}.card{padding:15px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div><h1>ST 国試トレーナー</h1><div class="muted">言語聴覚士 国家試験対策</div></div><button id="installBtn" class="hidden">インストール</button></div>
+
+  <div class="tabs card">
+    <button data-tab="home" class="active">ホーム</button>
+    <button data-tab="practice">問題演習</button>
+    <button data-tab="mock">模試</button>
+    <button data-tab="analysis">成績</button>
+  </div>
+
+  <section id="home" class="page">
+    <div class="card">
+      <h2>今日の学習</h2>
+      <div class="muted">まず10問。間違えた問題は苦手登録して再演習。</div>
+      <div class="stats">
+        <div class="stat"><span class="muted">回答</span><b id="answered">0</b></div>
+        <div class="stat"><span class="muted">正答率</span><b id="rate">—</b></div>
+        <div class="stat"><span class="muted">苦手</span><b id="weak">0</b></div>
+      </div>
+      <div class="actions" style="margin-top:14px">
+        <button class="primary" id="start10">10問トレーニング</button>
+        <button id="startWeak">苦手だけ復習</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>合格目安</h2>
+      <div class="muted">200点満点中120点以上をひとつの目安として表示。</div>
+      <div class="bar" style="margin-top:12px"><i id="overall" style="width:0%"></i></div>
+    </div>
+  </section>
+
+  <section id="practice" class="page hidden">
+    <div class="card">
+      <label class="muted">出題分野</label>
+      <select id="subject"></select>
+    </div>
+    <div class="card">
+      <div class="muted" id="meta"></div>
+      <h2 id="question" style="margin-top:8px"></h2>
+      <div id="choices"></div>
+      <div id="explain" class="result hidden"></div>
+      <div class="actions" style="margin-top:14px">
+        <button id="weakToggle">☆ 苦手登録</button>
+        <button class="primary" id="next">次の問題</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="mock" class="page hidden">
+    <div class="card" id="mockSetup">
+      <h2>模擬試験</h2>
+      <div class="muted">採点は最後にまとめて表示。</div>
+      <div class="actions" style="margin-top:14px">
+        <button class="primary mockStart" data-n="20">20問模試</button>
+        <button class="mockStart" data-n="50">50問模試</button>
+      </div>
+    </div>
+    <div class="card hidden" id="mockPlay">
+      <div class="muted" id="mockProgress"></div>
+      <h2 id="mockQuestion" style="margin-top:8px"></h2>
+      <div id="mockChoices"></div>
+    </div>
+    <div class="card hidden" id="mockResult">
+      <h2>模試結果</h2><div id="mockScore" style="font-size:32px;font-weight:800"></div>
+      <div id="mockJudge" style="margin-top:8px"></div>
+      <button class="primary" id="mockAgain" style="margin-top:14px">もう一度</button>
+    </div>
+  </section>
+
+  <section id="analysis" class="page hidden">
+    <div class="card">
+      <h2>科目別正答率</h2>
+      <div id="subjectStats"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const SUBJECTS=["基礎医学","臨床医学","臨床歯科医学","音声・言語・聴覚医学","心理学","音声・言語学","社会福祉・教育","言語聴覚障害学総論","失語・高次脳機能障害学","言語発達障害学","発声発語・嚥下障害学","聴覚障害学"];
+const Q=[
+["基礎医学","錐体路に含まれるものはどれか。",["皮質脊髄路","脊髄視床路","後索路","前庭脊髄路","網様体脊髄路"],0,"皮質脊髄路は随意運動に重要な下行性運動路で、錐体路の中心をなす。"],
+["基礎医学","迷走神経は第何脳神経か。",["VII","VIII","IX","X","XI"],3,"迷走神経は第X脳神経。咽頭・喉頭機能にも重要。"],
+["臨床医学","Parkinson病でみられやすい症状はどれか。",["安静時振戦","感覚失語","伝音難聴","半側空間無視のみ","弛緩性麻痺のみ"],0,"Parkinson病では安静時振戦、筋強剛、無動・寡動などが代表的。"],
+["臨床歯科医学","舌運動に主要に関与する脳神経はどれか。",["三叉神経","顔面神経","舌咽神経","迷走神経","舌下神経"],4,"舌下神経は舌筋の多くを支配する。"],
+["音声・言語・聴覚医学","声帯を外転させる筋はどれか。",["後輪状披裂筋","外側輪状披裂筋","甲状披裂筋","輪状甲状筋","披裂筋"],0,"後輪状披裂筋は声帯を外転させる唯一の筋。"],
+["心理学","情報を一時的に保持しながら処理する機能はどれか。",["ワーキングメモリ","馴化","投影","反射","般化"],0,"ワーキングメモリは情報の一時保持と操作を担う。"],
+["音声・言語学","母音識別に重要な音響指標はどれか。",["フォルマント周波数","心拍数","肺活量","骨導閾値","反射潜時"],0,"母音の音響的特徴は主に第1・第2フォルマントなどで表される。"],
+["社会福祉・教育","ICFで「活動」に該当するものはどれか。",["会話をする","脳梗塞","麻痺","家族の支援","住宅環境"],0,"ICFの活動は個人による課題・行為の遂行。"],
+["言語聴覚障害学総論","標準化検査で重要なのはどれか。",["定められた手続きを守る","患者ごとに採点基準を変える","結果だけ記録する","目的を考えない","疲労を無視する"],0,"標準化検査では実施・採点手続きを守ることが重要。"],
+["失語・高次脳機能障害学","Broca失語で典型的なのはどれか。",["流暢で多弁","努力性で非流暢な発話","聴力低下のみ","理解も発話も常に正常","視覚失認のみ"],1,"Broca失語では非流暢性、発話量低下、努力性発話などが典型。"],
+["失語・高次脳機能障害学","右半球損傷で生じやすい症状はどれか。",["左半側空間無視","典型的Broca失語","右半側空間無視のみ","声帯麻痺","伝音難聴"],0,"右半球、とくに右頭頂葉周辺の損傷では左半側空間無視が生じやすい。"],
+["言語発達障害学","言語発達評価で重要なのはどれか。",["理解と表出を分けてみる","発語数だけで決める","身長のみで判断する","家族情報を不要とする","一度の反応のみで決める"],0,"理解・表出、語彙、文法、対人コミュニケーションなど複数側面から評価する。"],
+["発声発語・嚥下障害学","咽頭期に重要な現象はどれか。",["咀嚼のみ","喉頭挙上と気道防御","食物認知のみ","手指操作","視覚探索"],1,"咽頭期では喉頭挙上、声門閉鎖などにより気道防御を行う。"],
+["発声発語・嚥下障害学","誤嚥の定義として適切なのはどれか。",["口唇からこぼれる","物質が声門より下へ侵入する","鼻腔へ逆流する","咽頭残留","咀嚼時間延長"],1,"誤嚥は食物や唾液などが声門より下の気道へ侵入すること。"],
+["聴覚障害学","伝音難聴でみられやすい所見はどれか。",["気骨導差","骨導のみ著明低下","語音明瞭度0%のみ","気導と骨導が必ず同値","左右差なし"],0,"伝音難聴では骨導に比べ気導閾値が悪化し、気骨導差がみられることが典型。"],
+["聴覚障害学","感音難聴について適切なのはどれか。",["外耳道閉鎖だけで起こる","内耳または聴神経系の障害で生じうる","鼓膜穿孔のみを指す","必ず大きな気骨導差","耳垢のみが原因"],1,"感音難聴は主に内耳・聴神経系などの障害で起こる。"]
+].map((x,i)=>({id:i+1,s:x[0],q:x[1],c:x[2],a:x[3],e:x[4]}));
+
+let attempts=JSON.parse(localStorage.getItem("stAttempts")||"[]");
+let weak=new Set(JSON.parse(localStorage.getItem("stWeak")||"[]"));
+let current=0,locked=false,queue=[],queuePos=0,mock=[],mockPos=0,mockAns=[];
+
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+function save(){localStorage.setItem("stAttempts",JSON.stringify(attempts));localStorage.setItem("stWeak",JSON.stringify([...weak]));}
+function switchTab(id){$$(".page").forEach(x=>x.classList.toggle("hidden",x.id!==id));$$(".tabs button").forEach(x=>x.classList.toggle("active",x.dataset.tab===id));if(id==="analysis")analysis();}
+$$(".tabs button").forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+
+const subject=$("#subject");subject.innerHTML='<option value="all">全科目</option>'+SUBJECTS.map(s=>`<option>${s}</option>`).join("");
+function stats(){let n=attempts.length, ok=attempts.filter(x=>x.ok).length,r=n?Math.round(ok/n*100):0;$("#answered").textContent=n;$("#rate").textContent=n?r+"%":"—";$("#weak").textContent=weak.size;$("#overall").style.width=r+"%";}
+function pool(){return Q.map((q,i)=>({q,i})).filter(x=>subject.value==="all"||x.q.s===subject.value)}
+function pick(){let p=pool();return p[Math.floor(Math.random()*p.length)].i}
+function render(i){current=i;locked=false;let q=Q[i];$("#meta").textContent=q.s+" ・ 問題 "+q.id;$("#question").textContent=q.q;$("#explain").classList.add("hidden");$("#choices").innerHTML="";q.c.forEach((t,j)=>{let b=document.createElement("button");b.className="choice";b.textContent=(j+1)+". "+t;b.onclick=()=>answer(j);$("#choices").appendChild(b)});$("#weakToggle").textContent=weak.has(i)?"★ 苦手登録済み":"☆ 苦手登録";}
+function answer(j){if(locked)return;locked=true;let q=Q[current],ok=j===q.a;attempts.push({s:q.s,ok});$$(".choice").forEach((b,k)=>{b.disabled=true;if(k===q.a)b.classList.add("correct");else if(k===j)b.classList.add("wrong")});let e=$("#explain");e.classList.remove("hidden");e.innerHTML=`<div class="${ok?"good":"bad"}">${ok?"○ 正解":"× 不正解　正解："+(q.a+1)}</div><div style="margin-top:8px">${q.e}</div>`;save();stats();}
+$("#next").onclick=()=>{if(queuePos<queue.length)render(queue[queuePos++]);else render(pick())}
+$("#weakToggle").onclick=()=>{weak.has(current)?weak.delete(current):weak.add(current);save();stats();$("#weakToggle").textContent=weak.has(current)?"★ 苦手登録済み":"☆ 苦手登録";}
+subject.onchange=()=>render(pick());
+function startTraining(n,onlyWeak=false){let a=onlyWeak?[...weak]:Q.map((_,i)=>i);if(!a.length){switchTab("practice");return;}a.sort(()=>Math.random()-.5);queue=a.slice(0,Math.min(n,a.length));queuePos=1;switchTab("practice");render(queue[0]);}
+$("#start10").onclick=()=>startTraining(10);$("#startWeak").onclick=()=>startTraining(10,true);
+
+$$(".mockStart").forEach(b=>b.onclick=()=>startMock(+b.dataset.n));
+function startMock(n){mock=Array.from({length:n},(_,i)=>i%Q.length).sort(()=>Math.random()-.5);mockPos=0;mockAns=Array(n).fill(null);$("#mockSetup").classList.add("hidden");$("#mockResult").classList.add("hidden");$("#mockPlay").classList.remove("hidden");renderMock();}
+function renderMock(){let q=Q[mock[mockPos]];$("#mockProgress").textContent=(mockPos+1)+" / "+mock.length;$("#mockQuestion").textContent=q.q;$("#mockChoices").innerHTML="";q.c.forEach((t,j)=>{let b=document.createElement("button");b.className="choice";b.textContent=(j+1)+". "+t;b.onclick=()=>{mockAns[mockPos]=j;if(mockPos<mock.length-1){mockPos++;renderMock()}else finishMock()};$("#mockChoices").appendChild(b)})}
+function finishMock(){let ok=0;mock.forEach((qi,i)=>{let q=Q[qi],hit=mockAns[i]===q.a;if(hit)ok++;attempts.push({s:q.s,ok:hit})});let r=Math.round(ok/mock.length*100);$("#mockPlay").classList.add("hidden");$("#mockResult").classList.remove("hidden");$("#mockScore").textContent=ok+" / "+mock.length+"（"+r+"%）";$("#mockJudge").textContent=r>=70?"安定圏":r>=60?"合格基準付近":"要復習";save();stats();}
+$("#mockAgain").onclick=()=>{$("#mockResult").classList.add("hidden");$("#mockSetup").classList.remove("hidden")};
+
+function analysis(){let box=$("#subjectStats");box.innerHTML="";SUBJECTS.forEach(s=>{let a=attempts.filter(x=>x.s===s),r=a.length?Math.round(a.filter(x=>x.ok).length/a.length*100):null;let d=document.createElement("div");d.style.margin="12px 0";d.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px"><span>${s}</span><span>${r===null?"未回答":r+"%"}</span></div><div class="bar" style="margin-top:5px"><i style="width:${r||0}%"></i></div>`;box.appendChild(d)})}
+
+let deferredPrompt=null;window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();deferredPrompt=e;$("#installBtn").classList.remove("hidden")});$("#installBtn").onclick=async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;$("#installBtn").classList.add("hidden")};
+if("serviceWorker"in navigator)navigator.serviceWorker.register("./sw.js");
+stats();render(0);
+</script>
+</body>
+</html>
